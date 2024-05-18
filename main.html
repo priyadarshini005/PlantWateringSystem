@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Home Page</title>
+		<script>
+			function update_visibility(check_box_id, div_id)
+			{
+				if(document.getElementById(check_box_id).checked)
+				{
+					document.getElementById(div_id).style.display = "none";
+				}
+				else
+				{
+					document.getElementById(div_id).style.display = "block";
+				}
+			}
+			function add_slots_input(element_id)
+			{
+				dynamic_slots_id = document.getElementById("dynamic_slots");
+				if (dynamic_slots_id != null)
+					dynamic_slots_id.remove();
+				var container = document.createElement('div');
+				container.id = "dynamic_slots";
+				document.getElementById('slots').appendChild(container);
+				//var result = document.querySelector('#dynamic_slots');
+				for (var i = 2; i <= parseInt(document.getElementById(element_id).value); i++)
+				{
+					var slot_input = document.createElement('input');
+					slot_input.type = "time"
+					slot_input.id = "slot" + i;
+					new_line = document.createElement('br');
+					document.getElementById('dynamic_slots').appendChild(slot_input);
+					document.getElementById('dynamic_slots').appendChild(new_line);
+				}
+			}
+			function send_details()
+			{
+				var httpRequest = new XMLHttpRequest();
+				var everyday = document.getElementById("everyday").checked;
+				var everytime = document.getElementById("everytime").checked;
+				var noOfDays = 0;
+				if(!everyday)
+					noOfDays = document.getElementById("NoOfDays").value;
+				var noOfTimes = 0;
+				var duration = 0;
+				if(!everytime)
+				{
+					duration = document.getElementById("duration").value;
+					noOfTimes = document.getElementById("NoOfTimes").value;
+				}
+				var JsonObj =	{
+									"everyday": everyday,
+									"noOfDays": noOfDays,
+									"everytime": everytime,
+									"noOfTimes": noOfTimes,
+									"duration": duration,
+									"slots": []
+								};
+				if(!everytime)	
+					for(let i = 1; i <= noOfTimes; i++)
+						JsonObj.slots[i - 1] = document.getElementById("slot" + i).value;
+				httpRequest.open("POST", "serverSideLibrary.php", true);
+				httpRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+				httpRequest.setRequestHeader("FUNCTION", "updateApplicationSetup");
+				httpRequest.onreadystatechange = function()
+				{
+					if(this.readyState == 4 && this.status == 200)
+					{
+						updated = this.getResponseHeader("update");
+						responseMessage = this.responseText;
+						if(updated)
+						{	
+							alert("Data updated successfully");
+							document.getElementById("everyday").value = "true";
+							document.getElementById("NoOfTimes").value = 1;
+							document.getElementById("duration").value = 10;
+							document.getElementById("everytime").value = "false";
+							document.getElementById("NoOfDays").value = 1;
+							add_slots_input("NoOfTimes");
+						}
+						else
+							alert(responseMessage);
+					}
+				};
+				alert("Sending request");
+				httpRequest.send(JSON.stringify(JsonObj));
+			}
+		</script>
+	</head>
+	<body>
+		<h2>Please fill up the below form and submit it</h2>
+		Water Plants everyday 
+		<input type="checkbox" id="everyday" name="everyday" onclick='update_visibility("everyday", "water_days")' checked /> <br/>
+		<div id=water_days style="display: none">
+			No. of Days the plant needs to be watered 
+			<input type=number id=NoOfDays name=NoOfDays type=number value=1 min=1 /> <br/>
+		</div>
+		Water Plants all the time in a day 
+		<input type=checkbox id=everytime name=everytime onclick='update_visibility("everytime", "water_time")' checked /> <br/>
+		<div id=water_time style="display: none">
+			No. of times the plant needs to be watered in a day 
+			<input type=number id="NoOfTimes" name="NoOfTimes" value=1 min=1 max=24 onblur='add_slots_input("NoOfTimes")' /> <br/>
+			Choose the slots <br/>
+			<div id="slots">
+				<input type="time" id="slot1" />
+			</div>
+			Duration of how long the system needs to water the plant per time (in seconds) 
+			<input id=duration name=duration type=number value=10 min=10 /> <br/>
+		</div>
+		<input type=button id=submit onclick='send_details()' value="SUBMIT" />
+	</body>
+
+</html>

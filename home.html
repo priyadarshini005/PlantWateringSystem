@@ -1,0 +1,100 @@
+<html>
+	<head>
+		<title>Plant Watering System Login</title>
+		<script type=text/javascript >
+			function update_visibility()
+			{
+				if(document.getElementById("grp").checked)
+				{
+					document.getElementById("userIdName").style.display = "block";
+					document.getElementById("userId").style.display = "block";
+					document.getElementById("userId").value = "";
+				}
+				else
+				{
+					document.getElementById("userIdName").style.display = "none";
+					document.getElementById("userId").style.display = "none";
+				}
+			}
+			function openMainPage(loginId, password)
+			{
+				userId = (document.getElementById("grp").checked) ? document.getElementById("userId").value : "";
+				if(validateInputs(loginId, password, userId))
+				{
+					authenticate = false;
+					responseMessage = '';
+					var httpRequest = new XMLHttpRequest();
+					httpRequest.open("POST", "serverSideLibrary.php", true);
+					httpRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+					httpRequest.setRequestHeader("FUNCTION", "authenticateUser");
+					httpRequest.onreadystatechange = function()
+					{
+						if(this.readyState == 4 && this.status == 200)
+						{
+							authenticate = this.getResponseHeader("authenticate");
+							responseMessage = this.responseText;
+							if(authenticate)
+							{
+								alert(responseMessage);
+								if(confirm("Continue?"))
+									window.location.href = "main.html";
+							}
+							else
+								alert(responseMessage);
+						}
+					};
+					requestHeader = "loginId=" + loginId + "&password=" + password;
+					requestHeader = (document.getElementById("grp").checked) ? requestHeader + "&userId=" + userId : requestHeader;
+					httpRequest.send(requestHeader);
+				}
+				else
+					window.alert("Mandatory fields must not be empty");				
+			}
+			function validateInputs(loginId, password, userId)
+			{
+				return ((document.getElementById("grp").checked && userId != "" && loginId != "" && password != "") || 
+					((!document.getElementById("grp").checked) && loginId != "" && password != ""))
+			}
+		</script>
+	</head>
+
+	<body onload="update_visibility()">
+		<table>
+			<tbody>
+				<tr>
+					<td><h2>Login to Access the Plant Watering System</h2></td>
+				</tr>
+			</tbody>
+		</table>
+		<table>
+			<tbody>
+				<tr>
+					<td>
+						<input type="checkbox" id="grp" name="grp" onclick='update_visibility()' />
+					</td>
+					<td>
+						<b>Login as a Group:</b>
+					</td>
+				</tr>
+<!--
+				<tr>
+					<td><input type=radio name=usr_grp id=usr />An Individual User</td>
+					<td><input type=radio name=usr_grp id=grp />A Group User</td>
+				</tr>
+-->				
+				<tr>
+					<td id="userIdName"><h3>*User Id</h3></td>	<td><h3><input type=text id=userId value="" /></h3></td>
+				</tr>
+				<tr>
+					<td><h3>*Login Id</h3></td>	<td><h3><input type=text id=loginId value="" /></h3></td>
+				</tr>
+				<tr>
+					<td><h3>*Password</h3></td>	<td><h3><input type=password id=password /></h3></td>
+				</tr>
+				<tr>
+					<td><input type=button name=loginSubmit value=Login onClick="openMainPage(document.getElementById('loginId').value, document.getElementById('password').value)" /></td>
+				</tr>
+			</tbody>
+		</table>
+	</body>
+</html>
