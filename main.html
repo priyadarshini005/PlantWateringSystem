@@ -16,13 +16,13 @@
 			}
 			function add_slots_input(element_id)
 			{
+				document.getElementById("slot1").value = 0;
 				dynamic_slots_id = document.getElementById("dynamic_slots");
 				if (dynamic_slots_id != null)
 					dynamic_slots_id.remove();
 				var container = document.createElement('div');
 				container.id = "dynamic_slots";
 				document.getElementById('slots').appendChild(container);
-				//var result = document.querySelector('#dynamic_slots');
 				for (var i = 2; i <= parseInt(document.getElementById(element_id).value); i++)
 				{
 					var slot_input = document.createElement('input');
@@ -82,8 +82,19 @@
 							alert(responseMessage);
 					}
 				};
-				alert("Sending request");
 				httpRequest.send(JSON.stringify(JsonObj));
+			}
+			function validate_slots(slot)
+			{
+/*				var time = document.getElementById(slot).value;
+				let[hours, mins] = time.split(":")
+				if(hours === undefined || hours === "")
+					hours = 0;
+				if(mins === undefined)
+					mins = 0;
+				document.getElementById(slot).value = hours + ':' + mins;
+				alert(document.getElementById(slot).value);
+*/
 			}
 		</script>
 	</head>
@@ -102,7 +113,7 @@
 			<input type=number id="NoOfTimes" name="NoOfTimes" value=1 min=1 max=24 onblur='add_slots_input("NoOfTimes")' /> <br/>
 			Choose the slots <br/>
 			<div id="slots">
-				<input type="time" id="slot1" />
+				<input type="time" id="slot1" onblur="validate_slots('slot1')" />
 			</div>
 			Duration of how long the system needs to water the plant per time (in seconds) 
 			<input id=duration name=duration type=number value=10 min=10 /> <br/>

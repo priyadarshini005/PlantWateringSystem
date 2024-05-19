@@ -17,7 +17,7 @@
 		}
 		else if ($functionToExecute === "updateApplicationSetup")
 		{
-			updateApplicationSetup();
+			updateDatabase();
 			echo "Execution done";
 		}
 	}
@@ -52,7 +52,6 @@
 			if($result["UserAsAdmin"] && $result["Admin"] === $loginId)
 			{
 				$authentic = checkAuthenticity($dbConnect, $userId, $loginId, $password, "usersetup");
-				echo("Authenticate: " . $authentic);
 				if($authentic)
 				{
 					header('authenticate: ' . $authentic);
@@ -60,7 +59,6 @@
 					$sql->bindParam(":loginId", $loginId);
 					$sql->execute();
 					$result = $sql->fetch(PDO::FETCH_ASSOC);
-					echo("Current logged in user is: " . $result["Id"]);
 					if($result)
 						$dbConnect->query("update systemsetup set CurrentLoggedInUser = '" . $result["Id"] . "' where PrimaryKey = 1");
 				}
@@ -107,13 +105,21 @@
 				return ($result["Password"] == $password);
 		}
 	}
-	function updateApplicationSetup()
+	function updateDatabase()
 	{
 		//header("Content-Type: application/json");
 		$prettyJson = file_get_contents("php://input");
 		echo "<pre>" . $prettyJson . "<pre/>"; 
 		$data = json_decode(file_get_contents("php://input"));
 		getConnection($dbConnect);
+		$slotId = "";
+		if(!$data->everytime)
+			$slotId = updateSlots($data, $dbConnect);
+		updateApplicationSetup($data, $dbConnect, $slotId);
+		header('update: ' . true);
+	}
+	function updateApplicationSetup($data, &$dbConnect, $slotId)
+	{
 		$sql = $dbConnect->prepare("select count(*) from applicationsetup");
 		$sql->execute();
 		$query = "";
@@ -129,21 +135,26 @@
 				$queryBody = "Everyday=true, Always=false, NoOfTimes=" . $data->noOfTimes;
 			else if(!($data->everyday) && !($data->everytime))
 				$queryBody = "Everyday=false, Always=false, NoOfDays=" . $data->noOfDays . ", NoOfTimes=" . $data->noOfTimes;
+			if($slotId != "")
+				$queryBody .= ", TimeSlot='" . $slotId . "'";
 			$query = $queryHead . $queryBody . $queryTail;
 		}
 		else
 		{
-			$query = "insert into applicationsetup (PrimaryKey, Everyday, Always, NoOfDays, NoOfTimes) ";
-			$query .= "values ('1', " . ", " . $data->everyday . ", " . $data->everytime . ", ". $data->noOfDays . ", " . $data->noOfTimes . ")";
+			if($slotId == "")
+				$slotId = "''";
+			$query = "insert into applicationsetup (PrimaryKey, Everyday, Always, NoOfDays, NoOfTimes, TimeSlot) ";				
+			$query .= "values ('1', " . ", " . $data->everyday . ", " . $data->everytime . ", ". $data->noOfDays . ", " . $data->noOfTimes . ", " . $slotId . ")";
 		}
 		echo $query;
 		$sql = $dbConnect->prepare($query);
 		$sql->execute();
 		//echo "Application setup updated";
+	}
 
-
+	function updateSlots($data, &$dbConnect)
+	{
 		// Update Slots
-		if(!$data->everytime)
 		{
 			$slotId = "";
 			$sql = $dbConnect->prepare("select Id from timeslot where NoOfSlots = :noOfTimes");
@@ -155,6 +166,7 @@
 				if($result)
 				{
 					$slotId = $result["Id"];
+					$dbConnect->query("update timeslot set LastModifiedAt = '" . date("Y-m-j H:i:s") . "' where Id = '" . $slotId . "'");
 					$sql = $dbConnect->query("select EntryNo from timeslotentry where Id = '" . $slotId . "'");
 					$records = $sql->fetchAll(PDO::FETCH_ASSOC);
 					$index = 0;
@@ -184,7 +196,7 @@
 				}
 			}
 		}
-		header('update: ' . true);
+		return $slotId;
 	}
 	function getNewSlotId($lastSlotId)
 	{

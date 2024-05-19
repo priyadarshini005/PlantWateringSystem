@@ -34,11 +34,7 @@
 							authenticate = this.getResponseHeader("authenticate");
 							responseMessage = this.responseText;
 							if(authenticate)
-							{
-								alert(responseMessage);
-								if(confirm("Continue?"))
-									window.location.href = "main.html";
-							}
+								window.location.href = "main.html";
 							else
 								alert(responseMessage);
 						}
